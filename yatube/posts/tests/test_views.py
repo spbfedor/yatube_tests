@@ -32,7 +32,9 @@ class PostPagesTest(
             text='Тестовый пост',
         )
 
-    def setUp(self):
+    def setUp(
+        self
+    ):
         # Создаем неавторизованный клиент
         self.guest_client = Client()
         # Создаем второй клиент
@@ -43,7 +45,9 @@ class PostPagesTest(
         )
 
     # Проверяем используемые шаблоны
-    def test_pages_uses_correct_template(self):
+    def test_pages_uses_correct_template(
+        self
+    ):
         """URL-адрес использует соответствующий шаблон."""
 
         # Собираем в словарь пары "имя_html_шаблона: reverse(name)"

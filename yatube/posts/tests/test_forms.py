@@ -69,7 +69,10 @@ class PostForm(TestCase):
             )
         )
         # Проверяем, увеличилось ли число постов
-        self.assertEqual(Post.objects.count(), posts_count + 1)
+        self.assertEqual(
+            Post.objects.count(),
+            posts_count + 1
+        )
         # Проверяем, что создалась запись с заданным слагом
         self.assertTrue(
             Post.objects.filter(
@@ -78,7 +81,9 @@ class PostForm(TestCase):
             ).exists()
         )
 
-    def test_post_edit_existing_slug(self):
+    def test_post_edit_existing_slug(
+        self
+    ):
         # Подсчитаем количество записей в Post
         posts_count = Post.objects.count()
         form_data = {
@@ -86,13 +91,21 @@ class PostForm(TestCase):
             'group': self.group.pk,
         }
         response = self.authorized_client.post(
-            reverse('app_posts:post_edit', args=(self.post.pk,)),
+            reverse(
+                'app_posts:post_edit',
+                args=(
+                    self.post.pk,
+                )
+            ),
             data=form_data,
             follow=True
         )
         # Убедимся, что запись в базе данных не создалась:
         # сравним количество записей в Post до и после отправки формы
-        self.assertEqual(Post.objects.count(), posts_count)
+        self.assertEqual(
+            Post.objects.count(),
+            posts_count
+        )
         # Проверим, что форма вернула ошибку с ожидаемым текстом:
         # из объекта response берём словарь 'form',
         # указываем ожидаемую ошибку для поля 'text' этого словаря
@@ -103,4 +116,7 @@ class PostForm(TestCase):
             'Длина этого поля должна быть не менее 15 символов'
         )
         # Проверим, что ничего не упало и страница отдаёт код 200
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.status_code,
+            200
+        )

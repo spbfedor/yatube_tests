@@ -122,7 +122,7 @@ class PostURLTest(
         response = self.guest_client.get(
             '/posts/1/edit/',
             follow=True
-            )
+        )
         self.assertRedirects(
             response,
             '/auth/login/?next=/posts/1/edit/'
