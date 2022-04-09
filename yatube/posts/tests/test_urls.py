@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 
@@ -31,8 +33,7 @@ class PostURLTest(
         )
 
     def setUp(self):
-        # Создаем неавторизованный клиент
-        self.guest_client = Client()
+        # Создаем неавторизованный клиен
         # Создаем второй клиент
         self.authorized_client = Client()
         # Авторизуем пользователя
@@ -47,33 +48,33 @@ class PostURLTest(
         # Список страниц
         url_names = [
             '/',
-            '/group/test-slug/',
-            '/profile/auth/',
-            '/posts/1/',
+            f'/group/{self.group.slug}/',
+            f'/profile/{self.user.username}/',
+            f'/posts/{self.post.pk}/',
         ]
 
         for url in url_names:
             with self.subTest(
                 url=url
             ):
-                response = self.guest_client.get(
+                response = self.client.get(
                     url
                 )
                 self.assertEqual(
                     response.status_code,
-                    200
+                    HTTPStatus.OK
                 )
 
     def test_page_response_an_error(
         self
     ):
         """Страница /unexisting_page/ возвращает ошибку."""
-        response = self.guest_client.get(
+        response = self.client.get(
             '/unexisting_page/'
         )
         self.assertEqual(
             response.status_code,
-            404
+            HTTPStatus.NOT_FOUND
         )
 
     def test_create_url_exists_at_desired_location(
@@ -85,14 +86,14 @@ class PostURLTest(
         )
         self.assertEqual(
             response.status_code,
-            200
+            HTTPStatus.OK
         )
 
     def test_create_url_redirect_anonymous(
         self
     ):
         """Страница /create/ перенаправляет анонимного пользователя."""
-        response = self.guest_client.get(
+        response = self.client.get(
             '/create/',
             follow=True
         )
@@ -106,11 +107,11 @@ class PostURLTest(
     ):
         """Страница /posts/<int:post_id>/edit/ доступна автору."""
         response = self.authorized_client.get(
-            '/posts/1/edit/'
+            f'/posts/{self.post.pk}/edit/'
         )
         self.assertEqual(
             response.status_code,
-            200
+            HTTPStatus.OK
         )
 
     def test_post_edit_url_redirect_anonymous(
@@ -119,8 +120,8 @@ class PostURLTest(
         """Страница /posts/<int:post_id>/edit/
         перенаправляет анонимного пользователя.
         """
-        response = self.guest_client.get(
-            '/posts/1/edit/',
+        response = self.client.get(
+            f'/posts/{self.post.pk}/edit/',
             follow=True
         )
         self.assertRedirects(
@@ -135,11 +136,11 @@ class PostURLTest(
         # Шаблоны по адресам
         templates_url_names = {
             '/': 'posts/index.html',
-            '/group/test-slug/': 'posts/group_list.html',
-            '/profile/auth/': 'posts/profile.html',
-            '/posts/1/': 'posts/post_detail.html',
+            f'/group/{self.group.slug}/': 'posts/group_list.html',
+            f'/profile/{self.user.username}/': 'posts/profile.html',
+            f'/posts/{self.post.pk}/': 'posts/post_detail.html',
             '/create/': 'posts/create_post.html',
-            '/posts/1/edit/': 'posts/create_post.html',
+            f'/posts/{self.post.pk}/edit/': 'posts/create_post.html',
 
         }
         for address, template in templates_url_names.items():

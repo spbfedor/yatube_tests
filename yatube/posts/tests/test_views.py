@@ -35,22 +35,16 @@ class PostPagesTest(
     def setUp(
         self
     ):
-        # Создаем неавторизованный клиент
-        self.guest_client = Client()
-        # Создаем второй клиент
         self.authorized_client = Client()
-        # Авторизуем пользователя
         self.authorized_client.force_login(
             self.user
         )
 
-    # Проверяем используемые шаблоны
     def test_pages_uses_correct_template(
         self
     ):
         """URL-адрес использует соответствующий шаблон."""
 
-        # Собираем в словарь пары "имя_html_шаблона: reverse(name)"
         templates_pages_names = {
             reverse(
                 'app_posts:index'
@@ -59,7 +53,7 @@ class PostPagesTest(
                 reverse(
                     'app_posts:group_list',
                     kwargs={
-                        'slug': 'test-slug'
+                        'slug': self.group.slug
                     }
                 )
             ): 'posts/group_list.html',
@@ -67,7 +61,7 @@ class PostPagesTest(
                 reverse(
                     'app_posts:profile',
                     kwargs={
-                        'username': 'auth'
+                        'username': self.user.username
                     }
                 )
             ): 'posts/profile.html',
@@ -75,7 +69,7 @@ class PostPagesTest(
                 reverse(
                     'app_posts:post_detail',
                     kwargs={
-                        'post_id': 1
+                        'post_id': self.post.pk
                     }
                 )
             ): 'posts/post_detail.html',
@@ -83,7 +77,7 @@ class PostPagesTest(
                 reverse(
                     'app_posts:post_edit',
                     kwargs={
-                        'post_id': 1
+                        'post_id': self.post.pk
                     }
                 )
             ): 'posts/create_post.html',
@@ -93,8 +87,7 @@ class PostPagesTest(
                 )
             ): 'posts/create_post.html',
         }
-        # Проверяем, что при обращении к name
-        # вызывается соответствующий HTML-шаблон
+
         for reverse_name, template in templates_pages_names.items():
             with self.subTest(
                 reverse_name=reverse_name
@@ -115,17 +108,23 @@ class PostPagesTest(
                 'app_posts:index'
             )
         )
-        first_object = response.context['page_obj'][0]
-        posts_text_0 = first_object.text
-        posts_author_0 = first_object.author.username
-        self.assertEqual(
-            posts_text_0,
-            'Тестовый пост'
-        )
-        self.assertEqual(
-            posts_author_0,
-            'auth'
-        )
+        first_object = response.context[
+            'page_obj'
+        ][
+            0
+        ]
+        first_dict = {
+            first_object.text: self.post.text,
+            first_object.author.username: self.user.username,
+            first_object.pk: self.post.pk
+        }
+        for expected, actual in first_dict.items():
+            with self.subTest(
+                expected=expected
+            ):
+                self.assertEqual(
+                    expected, actual
+                )
 
     def test_group_list_page_show_correct_context(
         self
@@ -135,28 +134,31 @@ class PostPagesTest(
             reverse(
                 'app_posts:group_list',
                 kwargs={
-                    'slug': 'test-slug'
+                    'slug': self.group.slug
                 }
             )
         )
-        self.assertEqual(
+        resp_dict = {
             response.context[
                 'group'
-            ].title,
-            'Тестовая группа'
-        )
-        self.assertEqual(
+            ].title: self.group.title,
             response.context[
                 'group'
-            ].slug,
-            'test-slug'
-        )
-        self.assertEqual(
+            ].slug: self.group.slug,
             response.context[
                 'group'
-            ].description,
-            'Тестовое описание'
-        )
+            ].description: self.group.description,
+            response.context[
+                'group'
+            ].pk: self.group.pk
+        }
+        for expected, actual in resp_dict.items():
+            with self.subTest(
+                expected=expected
+            ):
+                self.assertEqual(
+                    expected, actual
+                )
 
     def test_profile_page_show_correct_context(
         self
@@ -166,21 +168,27 @@ class PostPagesTest(
             reverse(
                 'app_posts:profile',
                 kwargs={
-                    'username': 'auth'
+                    'username': self.user.username
                 }
             )
         )
-        first_object = response.context['page_obj'][0]
-        posts_text_0 = first_object.text
-        posts_author_0 = first_object.author.username
-        self.assertEqual(
-            posts_text_0,
-            'Тестовый пост'
-        )
-        self.assertEqual(
-            posts_author_0,
-            'auth'
-        )
+        first_object = response.context[
+            'page_obj'
+        ][
+            0
+        ]
+        first_dict = {
+            first_object.text: self.post.text,
+            first_object.author.username: self.user.username,
+            first_object.pk: self.post.pk
+        }
+        for expected, actual in first_dict.items():
+            with self.subTest(
+                expected=expected
+            ):
+                self.assertEqual(
+                    expected, actual
+                )
 
     def test_detail_page_show_correct_context(
         self
@@ -190,26 +198,27 @@ class PostPagesTest(
             reverse(
                 'app_posts:post_detail',
                 kwargs={
-                    'post_id': 1
+                    'post_id': self.post.pk
                 }
             )
         )
-        first_object = response.context['post_list'][0]
-        posts_text_0 = first_object.text
-        posts_author_0 = first_object.author.username
-        posts_post_id_0 = first_object.pk
-        self.assertEqual(
-            posts_text_0,
-            'Тестовый пост'
-        )
-        self.assertEqual(
-            posts_author_0,
-            'auth'
-        )
-        self.assertEqual(
-            posts_post_id_0,
-            1
-        )
+        first_object = response.context[
+            'post_list'
+        ][
+            0
+        ]
+        first_dict = {
+            first_object.text: self.post.text,
+            first_object.author.username: self.user.username,
+            first_object.pk: self.post.pk
+        }
+        for expected, actual in first_dict.items():
+            with self.subTest(
+                expected=expected
+            ):
+                self.assertEqual(
+                    expected, actual
+                )
 
     def test_post_create_show_correct_context(
         self
@@ -220,15 +229,12 @@ class PostPagesTest(
                 'app_posts:post_create'
             )
         )
-        # Словарь ожидаемых типов полей формы:
-        # указываем, объектами какого класса должны быть поля формы
+
         form_fields = {
             'text': forms.fields.CharField,
             'group': forms.fields.ChoiceField,
         }
 
-        # Проверяем, что типы полей формы в словаре context
-        # соответствуют ожиданиям
         for value, expected in form_fields.items():
             with self.subTest(
                 value=value
@@ -238,8 +244,7 @@ class PostPagesTest(
                 ).fields.get(
                     value
                 )
-                # Проверяет, что поле формы является экземпляром
-                # указанного класса
+
                 self.assertIsInstance(
                     form_field,
                     expected
@@ -253,19 +258,16 @@ class PostPagesTest(
             reverse(
                 'app_posts:post_edit',
                 kwargs={
-                    'post_id': 1
+                    'post_id': self.post.pk
                 }
             )
         )
-        # Словарь ожидаемых типов полей формы:
-        # указываем, объектами какого класса должны быть поля формы
+
         form_fields = {
             'text': forms.fields.CharField,
             'group': forms.fields.ChoiceField,
         }
 
-        # Проверяем, что типы полей формы в словаре context
-        # соответствуют ожиданиям
         for value, expected in form_fields.items():
             with self.subTest(
                 value=value
@@ -275,8 +277,7 @@ class PostPagesTest(
                 ).fields.get(
                     value
                 )
-                # Проверяет, что поле формы является экземпляром
-                # указанного класса
+
                 self.assertIsInstance(
                     form_field,
                     expected
@@ -284,7 +285,6 @@ class PostPagesTest(
 
 
 class GroupViewsTest(TestCase):
-    # Здесь создаются фикстуры: клиент и 13 тестовых записей.
 
     @classmethod
     def setUpClass(
@@ -296,70 +296,17 @@ class GroupViewsTest(TestCase):
             username='auth',
         )
 
-        cls.post_1 = Post.objects.create(
-            author=cls.user,
-            text='Тестовый пост1',
-        )
+        cls.post = []
+        for number in range(13):
+            cls.post.append(
+                Post(
+                    text=f'Тестовый пост номер {number}',
+                    author=cls.user
+                )
+            )
+        Post.objects.bulk_create(cls.post)
 
-        cls.post_2 = Post.objects.create(
-            author=cls.user,
-            text='Тестовый пост 2'
-        )
-
-        cls.post_3 = Post.objects.create(
-            author=cls.user,
-            text='Тестовый пост 3'
-        )
-
-        cls.post_4 = Post.objects.create(
-            author=cls.user,
-            text='Тестовый пост 4'
-        )
-
-        cls.post_5 = Post.objects.create(
-            author=cls.user,
-            text='Тестовый пост 5'
-        )
-
-        cls.post_6 = Post.objects.create(
-            author=cls.user,
-            text='Тестовый пост 6'
-        )
-
-        cls.post_7 = Post.objects.create(
-            author=cls.user,
-            text='Тестовый пост 7'
-        )
-
-        cls.post_8 = Post.objects.create(
-            author=cls.user,
-            text='Тестовый пост 8'
-        )
-
-        cls.post_9 = Post.objects.create(
-            author=cls.user,
-            text='Тестовый пост 9'
-        )
-
-        cls.post_10 = Post.objects.create(
-            author=cls.user,
-            text='Тестовый пост 10'
-        )
-
-        cls.post_11 = Post.objects.create(
-            author=cls.user,
-            text='Тестовый пост 11'
-        )
-
-        cls.post_12 = Post.objects.create(
-            author=cls.user,
-            text='Тестовый пост 12'
-        )
-
-        cls.post_13 = Post.objects.create(
-            author=cls.user,
-            text='Тестовый пост 13'
-        )
+        cls.NUMBER_OF_POSTS = 10
 
     def test_first_page_contains_ten_records(
         self
@@ -369,14 +316,14 @@ class GroupViewsTest(TestCase):
                 'app_posts:index'
             )
         )
-        # Проверка: количество постов на первой странице равно 10.
+
         self.assertEqual(
             len(
                 response.context[
                     'page_obj'
                 ]
             ),
-            10
+            self.NUMBER_OF_POSTS
         )
 
     def test_second_page_contains_three_records(
@@ -394,5 +341,5 @@ class GroupViewsTest(TestCase):
                     'page_obj'
                 ]
             ),
-            3
+            Post.objects.count() - self.NUMBER_OF_POSTS
         )

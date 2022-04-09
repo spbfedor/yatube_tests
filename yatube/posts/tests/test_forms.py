@@ -1,7 +1,10 @@
+from http import HTTPStatus
+
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.urls import reverse
-from posts.models import Group, Post
+
+from ..models import Group, Post
 
 User = get_user_model()
 
@@ -29,12 +32,8 @@ class PostForm(TestCase):
             group=cls.group
         )
 
-        cls.form = PostForm()
-
     def setUp(self):
-        # Создаем неавторизованный клиент
-        self.guest_client = Client()
-        # Создаем второй клиент
+        # Создаем авторизованный клиент
         self.authorized_client = Client()
         # Авторизуем пользователя
         self.authorized_client.force_login(
@@ -46,10 +45,10 @@ class PostForm(TestCase):
         # Подсчитаем количество записей в Post
         posts_count = Post.objects.count()
         form_data = {
-            'text': 'Тестовый пост 555',
+            'text': self.post.text,
             'group': self.group.pk
         }
-        # Отправляем POST-запрос
+
         response = self.authorized_client.post(
             reverse(
                 'app_posts:post_create'
@@ -58,36 +57,36 @@ class PostForm(TestCase):
             follow=True,
         )
 
-        # Проверяем, сработал ли редирект
         self.assertRedirects(
             response,
             reverse(
                 'app_posts:profile',
                 kwargs={
-                    'username': 'auth'
+                    'username': self.user.username
                 }
             )
         )
-        # Проверяем, увеличилось ли число постов
+
         self.assertEqual(
             Post.objects.count(),
             posts_count + 1
         )
-        # Проверяем, что создалась запись с заданным слагом
+        # Проверяем, что создалась запись с заданным id
         self.assertTrue(
-            Post.objects.filter(
-                text='Тестовый пост 555',
-                group=self.group.pk
-            ).exists()
+            Post.objects.order_by(
+                '-pk'
+            )[
+                :1
+            ].exists()
         )
 
     def test_post_edit_existing_slug(
         self
     ):
-        # Подсчитаем количество записей в Post
+
         posts_count = Post.objects.count()
         form_data = {
-            'text': 'Текстовый пост',
+            'text': 'Тестовый пост',  # Менее 15 символов
             'group': self.group.pk,
         }
         response = self.authorized_client.post(
@@ -100,23 +99,43 @@ class PostForm(TestCase):
             data=form_data,
             follow=True
         )
-        # Убедимся, что запись в базе данных не создалась:
-        # сравним количество записей в Post до и после отправки формы
+
         self.assertEqual(
             Post.objects.count(),
             posts_count
         )
-        # Проверим, что форма вернула ошибку с ожидаемым текстом:
-        # из объекта response берём словарь 'form',
-        # указываем ожидаемую ошибку для поля 'text' этого словаря
+
         self.assertFormError(
             response,
             'form',
             'text',
             'Длина этого поля должна быть не менее 15 символов'
         )
-        # Проверим, что ничего не упало и страница отдаёт код 200
+
         self.assertEqual(
             response.status_code,
-            200
+            HTTPStatus.OK
+        )
+
+    def test_for_updatinga_record_in_the_database(self):
+        """Форма перезаписывает запись в БД"""
+        form_data = {
+            'text': 'Тестовый пост 777',
+            'group': self.group.pk,
+        }
+        self.authorized_client.post(
+            reverse(
+                'app_posts:post_edit',
+                args=(
+                    self.post.pk,
+                )
+            ),
+            data=form_data,
+            follow=True
+        )
+        self.assertTrue(
+            Post.objects.filter(
+                text='Тестовый пост 777',
+                group=self.group.pk,
+            ).exists()
         )
