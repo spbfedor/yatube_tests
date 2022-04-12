@@ -105,19 +105,23 @@ class PostPagesTest(
     ):
         """Шаблон index и profile сформирован с правильным контекстом."""
 
-        def check(address):
+        def check(address, object):
             response = self.authorized_client.get(
                 address
             )
             first_object = response.context[
-                'page_obj'
+                object
             ][
                 0
             ]
             first_dict = {
                 first_object.text: self.post.text,
                 first_object.author.username: self.user.username,
-                first_object.pk: self.post.pk
+                first_object.pk: self.post.pk,
+                first_object.group: self.group,
+                first_object.title: self.title,
+                first_object.description: self.description,
+                first_object.slug: self.slug
             }
             for expected, actual in first_dict.items():
                 with self.subTest(
@@ -127,20 +131,32 @@ class PostPagesTest(
                         expected, actual
                     )
 
-        check(
-            reverse(
-                'app_posts:index'
+            check(
+                reverse(
+                    'app_posts:index'
+                ),
+                'page_obj'
             )
-        )
 
-        check(
-            reverse(
-                'app_posts:profile',
-                kwargs={
-                    'username': self.user.username
-                }
+            check(
+                reverse(
+                    'app_posts:profile',
+                    kwargs={
+                        'username': self.user.username
+                    }
+                ),
+                'page_obj'
             )
-        )
+
+            check(
+                reverse(
+                    'app_posts:post_detail',
+                    kwargs={
+                        'post_id': self.post.pk
+                    }
+                ),
+                'post_list'
+            )
 
     def test_group_list_page_show_correct_context(
         self
@@ -169,36 +185,6 @@ class PostPagesTest(
             ].pk: self.group.pk
         }
         for expected, actual in resp_dict.items():
-            with self.subTest(
-                expected=expected
-            ):
-                self.assertEqual(
-                    expected, actual
-                )
-
-    def test_detail_page_show_correct_context(
-        self
-    ):
-        """Шаблон detail сформирован с правильным контекстом."""
-        response = self.authorized_client.get(
-            reverse(
-                'app_posts:post_detail',
-                kwargs={
-                    'post_id': self.post.pk
-                }
-            )
-        )
-        first_object = response.context[
-            'post_list'
-        ][
-            0
-        ]
-        first_dict = {
-            first_object.text: self.post.text,
-            first_object.author.username: self.user.username,
-            first_object.pk: self.post.pk
-        }
-        for expected, actual in first_dict.items():
             with self.subTest(
                 expected=expected
             ):

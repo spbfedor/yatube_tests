@@ -70,12 +70,21 @@ class PostForm(TestCase):
             posts_count + 1
         )
 
-        edited_post = Post.objects.get(pk=self.post.pk)
+        last_post = Post.objects.get(pk=form_data['group'])
 
-        self.assertEqual(
-            edited_post.text,
-            form_data['text']
-        )
+        verification_dict = {
+            last_post.text: form_data['text'],
+            last_post.group.pk: form_data['group']
+        }
+
+        for actual, expected in verification_dict.items():
+            with self.subTest(
+                actual=actual
+            ):
+
+                self.assertEqual(
+                    actual, expected
+                )
 
     def test_post_edit_existing_slug(
         self
@@ -134,7 +143,16 @@ class PostForm(TestCase):
 
         edited_post = Post.objects.get(pk=self.post.pk)
 
-        self.assertEqual(
-            edited_post.text,
-            form_data['text']
-        )
+        verification_dict = {
+            edited_post.text: form_data['text'],
+            edited_post.group.pk: form_data['group']
+        }
+
+        for actual, expected in verification_dict.items():
+            with self.subTest(
+                actual=actual
+            ):
+
+                self.assertEqual(
+                    actual, expected
+                )
