@@ -33,20 +33,18 @@ class PostForm(TestCase):
         )
 
     def setUp(self):
-        # Создаем авторизованный клиент
         self.authorized_client = Client()
-        # Авторизуем пользователя
         self.authorized_client.force_login(
             self.user
         )
 
     def test_create_post_form(self):
         """Валидная форма создает запись в Post."""
-        # Подсчитаем количество записей в Post
+
         posts_count = Post.objects.count()
         form_data = {
             'text': self.post.text,
-            'group': self.group.pk
+            'group': self.group.pk,
         }
 
         response = self.authorized_client.post(
@@ -71,13 +69,12 @@ class PostForm(TestCase):
             Post.objects.count(),
             posts_count + 1
         )
-        # Проверяем, что создалась запись с заданным id
-        self.assertTrue(
-            Post.objects.order_by(
-                '-pk'
-            )[
-                :1
-            ].exists()
+
+        edited_post = Post.objects.get(pk=self.post.pk)
+
+        self.assertEqual(
+            edited_post.text,
+            form_data['text']
         )
 
     def test_post_edit_existing_slug(
@@ -86,7 +83,7 @@ class PostForm(TestCase):
 
         posts_count = Post.objects.count()
         form_data = {
-            'text': 'Тестовый пост',  # Менее 15 символов
+            'text': 'Тестовый пост',
             'group': self.group.pk,
         }
         response = self.authorized_client.post(
@@ -119,8 +116,9 @@ class PostForm(TestCase):
 
     def test_for_updatinga_record_in_the_database(self):
         """Форма перезаписывает запись в БД"""
+
         form_data = {
-            'text': 'Тестовый пост 777',
+            'text': self.post.text,
             'group': self.group.pk,
         }
         self.authorized_client.post(
@@ -133,9 +131,10 @@ class PostForm(TestCase):
             data=form_data,
             follow=True
         )
-        self.assertTrue(
-            Post.objects.filter(
-                text='Тестовый пост 777',
-                group=self.group.pk,
-            ).exists()
+
+        edited_post = Post.objects.get(pk=self.post.pk)
+
+        self.assertEqual(
+            edited_post.text,
+            form_data['text']
         )

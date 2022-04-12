@@ -4,6 +4,7 @@ from django.test import Client, TestCase
 from django.urls import reverse
 
 from ..models import Group, Post
+from ..views import NAMBER_OF_POSTS
 
 User = get_user_model()
 
@@ -99,32 +100,47 @@ class PostPagesTest(
                     response, template
                 )
 
-    def test_index_page_show_correct_context(
+    def test_index_and_profile_page_show_correct_context(
         self
     ):
-        """Шаблон index сформирован с правильным контекстом."""
-        response = self.authorized_client.get(
+        """Шаблон index и profile сформирован с правильным контекстом."""
+
+        def check(address):
+            response = self.authorized_client.get(
+                address
+            )
+            first_object = response.context[
+                'page_obj'
+            ][
+                0
+            ]
+            first_dict = {
+                first_object.text: self.post.text,
+                first_object.author.username: self.user.username,
+                first_object.pk: self.post.pk
+            }
+            for expected, actual in first_dict.items():
+                with self.subTest(
+                    expected=expected
+                ):
+                    self.assertEqual(
+                        expected, actual
+                    )
+
+        check(
             reverse(
                 'app_posts:index'
             )
         )
-        first_object = response.context[
-            'page_obj'
-        ][
-            0
-        ]
-        first_dict = {
-            first_object.text: self.post.text,
-            first_object.author.username: self.user.username,
-            first_object.pk: self.post.pk
-        }
-        for expected, actual in first_dict.items():
-            with self.subTest(
-                expected=expected
-            ):
-                self.assertEqual(
-                    expected, actual
-                )
+
+        check(
+            reverse(
+                'app_posts:profile',
+                kwargs={
+                    'username': self.user.username
+                }
+            )
+        )
 
     def test_group_list_page_show_correct_context(
         self
@@ -153,36 +169,6 @@ class PostPagesTest(
             ].pk: self.group.pk
         }
         for expected, actual in resp_dict.items():
-            with self.subTest(
-                expected=expected
-            ):
-                self.assertEqual(
-                    expected, actual
-                )
-
-    def test_profile_page_show_correct_context(
-        self
-    ):
-        """Шаблон profile сформирован с правильным контекстом."""
-        response = self.authorized_client.get(
-            reverse(
-                'app_posts:profile',
-                kwargs={
-                    'username': self.user.username
-                }
-            )
-        )
-        first_object = response.context[
-            'page_obj'
-        ][
-            0
-        ]
-        first_dict = {
-            first_object.text: self.post.text,
-            first_object.author.username: self.user.username,
-            first_object.pk: self.post.pk
-        }
-        for expected, actual in first_dict.items():
             with self.subTest(
                 expected=expected
             ):
@@ -306,8 +292,6 @@ class GroupViewsTest(TestCase):
             )
         Post.objects.bulk_create(cls.post)
 
-        cls.NUMBER_OF_POSTS = 10
-
     def test_first_page_contains_ten_records(
         self
     ):
@@ -323,13 +307,12 @@ class GroupViewsTest(TestCase):
                     'page_obj'
                 ]
             ),
-            self.NUMBER_OF_POSTS
+            NAMBER_OF_POSTS
         )
 
     def test_second_page_contains_three_records(
         self
     ):
-        # Проверка: на второй странице должно быть три поста.
         response = self.client.get(
             reverse(
                 'app_posts:index'
@@ -341,5 +324,5 @@ class GroupViewsTest(TestCase):
                     'page_obj'
                 ]
             ),
-            Post.objects.count() - self.NUMBER_OF_POSTS
+            Post.objects.count() - NAMBER_OF_POSTS
         )

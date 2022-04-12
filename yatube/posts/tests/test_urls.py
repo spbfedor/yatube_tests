@@ -33,10 +33,7 @@ class PostURLTest(
         )
 
     def setUp(self):
-        # Создаем неавторизованный клиен
-        # Создаем второй клиент
         self.authorized_client = Client()
-        # Авторизуем пользователя
         self.authorized_client.force_login(
             self.user
         )
@@ -45,7 +42,7 @@ class PostURLTest(
         self
     ):
         """Страница / доступна любому пользователю."""
-        # Список страниц
+
         url_names = [
             '/',
             f'/group/{self.group.slug}/',
@@ -69,6 +66,7 @@ class PostURLTest(
         self
     ):
         """Страница /unexisting_page/ возвращает ошибку."""
+
         response = self.client.get(
             '/unexisting_page/'
         )
@@ -81,6 +79,7 @@ class PostURLTest(
         self
     ):
         """Страница /create/ доступна авторизованному пользователю."""
+
         response = self.authorized_client.get(
             '/create/'
         )
@@ -93,6 +92,7 @@ class PostURLTest(
         self
     ):
         """Страница /create/ перенаправляет анонимного пользователя."""
+
         response = self.client.get(
             '/create/',
             follow=True
@@ -106,6 +106,7 @@ class PostURLTest(
         self
     ):
         """Страница /posts/<int:post_id>/edit/ доступна автору."""
+
         response = self.authorized_client.get(
             f'/posts/{self.post.pk}/edit/'
         )
@@ -120,6 +121,7 @@ class PostURLTest(
         """Страница /posts/<int:post_id>/edit/
         перенаправляет анонимного пользователя.
         """
+
         response = self.client.get(
             f'/posts/{self.post.pk}/edit/',
             follow=True
@@ -133,7 +135,7 @@ class PostURLTest(
         self
     ):
         """URL-адрес использует соответствующий шаблон."""
-        # Шаблоны по адресам
+
         templates_url_names = {
             '/': 'posts/index.html',
             f'/group/{self.group.slug}/': 'posts/group_list.html',
