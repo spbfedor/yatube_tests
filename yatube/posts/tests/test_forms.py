@@ -70,7 +70,7 @@ class PostForm(TestCase):
             posts_count + 1
         )
 
-        last_post = Post.objects.get(pk=form_data['group'])
+        last_post = Post.objects.order_by('-pk')[0]
 
         verification_dict = {
             last_post.text: form_data['text'],
